@@ -3,6 +3,7 @@ const app = express();
 const cookieParser = require("cookie-parser");
 const connectDb = require("./src/config/database");
 const authRouter = require("./src/routes/auth");
+const bugRouter = require("./src/routes/bug");
 require("dotenv").config();
 const cors = require("cors");
 
@@ -11,6 +12,8 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/", authRouter);
+app.use("/", bugRouter);
+
 const PORT = process.env.PORT;
 connectDb()
   .then(() => {
