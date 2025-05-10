@@ -6,6 +6,7 @@ const authRouter = require("./src/routes/auth");
 const bugRouter = require("./src/routes/bug");
 require("dotenv").config();
 const cors = require("cors");
+const fixRequestRouter = require("./src/routes/request");
 
 app.use(cookieParser());
 app.use(express.json());
@@ -13,6 +14,7 @@ app.use(cors());
 
 app.use("/", authRouter);
 app.use("/", bugRouter);
+app.use("/", fixRequestRouter);
 
 const PORT = process.env.PORT;
 connectDb()
