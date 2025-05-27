@@ -38,7 +38,7 @@ bugRouter.post(
       });
 
       await newBug.save();
-      await newBug.populate("postedBy", "first_name last_name");
+      await newBug.populate("postedBy", "firstName lastName");
 
       res.status(201).json({
         message: "Bug created successfully",
@@ -53,7 +53,7 @@ bugRouter.post(
 bugRouter.get("/get_bugs", userAuth, async (req, res) => {
   try {
     const bugs = await Bug.find()
-      .populate("postedBy", "first_name last_name")
+      .populate("postedBy", "firstName lastName")
       .sort({ createdAt: -1 });
     if (!bugs || bugs.length === 0) {
       return res.status(404).json({ message: "No bugs found" });
@@ -71,7 +71,7 @@ bugRouter.get("/get_bug/:id", userAuth, async (req, res) => {
   try {
     const bug = await Bug.findById(req.params.id).populate(
       "postedBy",
-      "first_name last_name"
+      "firstName lastName"
     );
     if (!bug) {
       return res.status(404).json({ message: "Bug not found" });
@@ -144,7 +144,7 @@ bugRouter.get("/filter", userAuth, async (req, res) => {
     if (tags) filter.tags = { $regex: tags, $options: "i" };
     if (status) filter.status = status;
     const bugs = await Bug.find(filter)
-      .populate("postedBy", "first_name last_name")
+      .populate("postedBy", " last_name")
       .sort({ createdAt: -1 });
     if (!bugs || bugs.length === 0) {
       return res.status(404).json({ message: "No bugs found" });

@@ -42,7 +42,7 @@ fixRequestRouter.post("/fix-request/send", userAuth, async (req, res) => {
 
     const populateReq = await FixRequest.findById(newRequest._id).populate(
       "user",
-      "first_name last_name"
+      "firstName lastName"
     );
 
     return res
@@ -70,7 +70,7 @@ fixRequestRouter.get("/requests/:bugId", userAuth, async (req, res) => {
     }
     const requests = await FixRequest.find({ bug: bugId }).populate(
       "user",
-      "first_name last_name"
+      "firstName lastName"
     );
     if (requests.length === 0) {
       return res.status(404).json({ message: "No requests found" });
@@ -100,7 +100,7 @@ fixRequestRouter.post(
       }
       const request = await FixRequest.findById(requestId)
         .populate("bug")
-        .populate("user", "first_name last_name");
+        .populate("user", "firstName lastName");
       if (!request) {
         return res.status(404).json({ message: "Request not found" });
       }

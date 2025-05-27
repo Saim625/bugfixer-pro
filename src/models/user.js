@@ -1,17 +1,17 @@
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    first_name: {
+    firstName: {
       type: String,
       required: true,
       max: 20,
       min: 2,
     },
-    last_name: {
+    lastName: {
       type: String,
       required: true,
       max: 20,
@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     skills: {
       type: [String],
       default: [],
@@ -50,6 +54,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    verifyTokenHash: String,
+    verifyTokenExpires: Date,
   },
   { timestamps: true }
 );
@@ -65,22 +71,22 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-userSchema.methods.comparePassword = async function (password){
+userSchema.methods.comparePassword = async function (password) {
   const user = this;
-  try{
+  try {
     const isMatch = await bcrypt.compare(password, user.password);
     return isMatch;
-  }catch(err){
+  } catch (err) {
     throw new Error("Entered password is incorrect");
   }
-}
+};
 
 userSchema.methods.getJWT = async function () {
   const user = this;
-  const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "8h",
   });
   return token;
-}
+};
 
-module.exports =  mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", userSchema);

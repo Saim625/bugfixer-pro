@@ -3,54 +3,72 @@ const User = require("../models/user");
 const validateSignUp = require("../utils/validation");
 const authRouter = express.Router();
 const validator = require("validator");
-
+const {
+  generateVerificationToken,
+  sendVerificationEmail,
+} = require("../utils/emailAuthentication");
+const crypto = require("crypto");
 
 authRouter.post("/signup", async (req, res) => {
   validateSignUp(req);
   try {
-    const {
-      first_name,
-      last_name,
-      emailId,
-      password,
-      isDevelper,
-      skills,
-      bio,
-    } = req.body;
+    const { firstName, lastName, emailId, password, isDeveloper, skills, bio } =
+      req.body;
 
     const existingUser = await User.findOne({ emailId });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
-    const newUser = new User({
-      first_name,
-      last_name,
+
+    const { verifyToken, verifyHash } = generateVerificationToken();
+
+    const user = new User({
+      firstName,
+      lastName,
       emailId,
       password,
-      isDevelper,
+      isDeveloper,
+      verifyTokenHash: verifyHash,
+      verifyTokenExpires: Date.now() + 1000 * 60 * 60 * 3,
       skills,
       bio,
     });
-    const savedUser = await newUser.save();
-    const token = await savedUser.getJWT();
-    res.cookie("token", token, {
-      httpOnly: true,
-      expires: new Date(Date.now() + 8 * 3600000),
-    });
+    await user.save();
+    await sendVerificationEmail(user, verifyToken);
+
     res.status(201).json({
-      message: "User created successfully",
-      user: savedUser,
+      message: "Verification email sent.",
     });
-  } catch(err) {
+  } catch (err) {
     res.status(400).send("Error Saving User " + err.message);
   }
 });
 
+authRouter.get("/verify-email", async (req, res) => {
+  try {
+    const { token, id } = req.query;
+    if (!token || !id) return res.status(400).send("Invalid link");
+    const verifyHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      _id: id,
+      verifyTokenHash: verifyHash,
+      verifyTokenExpires: { $gt: Date.now() },
+    });
+    if (!user) return res.status(400).send("Token invalid or expired");
+    user.isVerified = true;
+    user.verifyTokenHash = undefined;
+    user.verifyTokenExpires = undefined;
+    await user.save();
+    res.status(200).json({ success: true, message: "Email verified" });
+  } catch (err) {
+    res.status(500).send("Server error " + err.message);
+  }
+});
 
 authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
-    if(!validator.isEmail(emailId)) {
+    if (!validator.isEmail(emailId)) {
       throw new Error("Email is not valid");
     }
     const user = await User.findOne({ emailId });
@@ -71,9 +89,9 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-authRouter.post("/logout", (req,res) => {
+authRouter.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logout successful" });
-})
+});
 
 module.exports = authRouter;
