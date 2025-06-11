@@ -8,6 +8,7 @@ const {
   sendVerificationEmail,
 } = require("../utils/emailAuthentication");
 const crypto = require("crypto");
+const userAuth = require("../middlewares/auth");
 
 authRouter.post("/signup", async (req, res) => {
   validateSignUp(req);
@@ -38,6 +39,7 @@ authRouter.post("/signup", async (req, res) => {
 
     res.status(201).json({
       message: "Verification email sent.",
+      user: user.emailId,
     });
   } catch (err) {
     res.status(400).send("Error Saving User " + err.message);
@@ -83,9 +85,37 @@ authRouter.post("/login", async (req, res) => {
     res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({
+      message: "Login successful",
+      User: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailId: user.emailId,
+        isDeveloper: user.isDeveloper,
+        isVerified: user.isVerified,
+        bio: user.bio,
+        skills: user.skills,
+      },
+    });
   } catch (error) {
     console.error("Error in /login route:", error);
+  }
+});
+
+authRouter.patch("/complete-profile", userAuth, async (req, res) => {
+  try {
+    const { bio, skills, isDeveloper } = req.body;
+    const userId = req.user._id;
+
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { bio, skills, isDeveloper },
+      { new: true }
+    );
+    res.json({ message: "Profile updated", user: updateUser });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating profile" + err.message });
   }
 });
 

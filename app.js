@@ -10,6 +10,7 @@ const cors = require("cors");
 const fixRequestRouter = require("./src/routes/request");
 const http = require("http");
 const initializeSockets = require("./src/utils/socket");
+const userRouter = require("./src/routes/userProfile");
 
 const server = http.createServer(app);
 initializeSockets(server);
@@ -27,6 +28,7 @@ app.use("/", authRouter);
 app.use("/", bugRouter);
 app.use("/", fixRequestRouter);
 app.use("/", chatRouter);
+app.use("/", userRouter);
 
 const PORT = process.env.PORT;
 connectDb()
